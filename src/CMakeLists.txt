@@ -1,4 +1,12 @@
-find_package(Magnum REQUIRED GL)
+find_package(Corrade REQUIRED Utility)
+find_package(Magnum REQUIRED
+  GL
+  SceneGraph
+  Trade
+  Shaders
+  MeshTools
+  Primitives
+  )
 
 if(CORRADE_TARGET_EMSCRIPTEN)
     find_package(Magnum REQUIRED EmscriptenApplication)
@@ -12,7 +20,14 @@ add_executable(MyApplication MyApplication.cpp)
 target_link_libraries(MyApplication PRIVATE
     Magnum::Application
     Magnum::GL
-    Magnum::Magnum)
+    Magnum::SceneGraph
+    Magnum::Trade
+    Magnum::Shaders
+    Magnum::MeshTools
+    Magnum::Primitives
+    Magnum::Magnum
+    Corrade::Utility
+    )
 
 # For Emscripten copy the boilerplate next to the executable so it can be run
 # directly from the build dir; provide an install target as well
@@ -22,11 +37,15 @@ if(CORRADE_TARGET_EMSCRIPTEN)
             ${MAGNUM_EMSCRIPTENAPPLICATION_JS}
             ${MAGNUM_WEBAPPLICATION_CSS}
             ${CMAKE_CURRENT_SOURCE_DIR}/MyApplication.html
+            ${CMAKE_CURRENT_SOURCE_DIR}/index.html
             $<TARGET_FILE_DIR:MyApplication>)
+
+    target_compile_options(MyApplication PRIVATE "--emrun")
 
     install(TARGETS MyApplication DESTINATION ${MAGNUM_DEPLOY_PREFIX})
     install(FILES
         MyApplication.html
+        index.html
         ${MAGNUM_EMSCRIPTENAPPLICATION_JS}
         ${MAGNUM_WEBAPPLICATION_CSS}
         DESTINATION ${MAGNUM_DEPLOY_PREFIX})
@@ -34,6 +53,13 @@ if(CORRADE_TARGET_EMSCRIPTEN)
         $<TARGET_FILE_DIR:MyApplication>/MyApplication.js.mem
         $<TARGET_FILE_DIR:MyApplication>/MyApplication.wasm
         DESTINATION ${MAGNUM_DEPLOY_PREFIX} OPTIONAL)
+    install(FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/../favicon.ico
+        DESTINATION ${MAGNUM_DEPLOY_PREFIX} OPTIONAL)
+    install(FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/app.js
+        DESTINATION ${MAGNUM_DEPLOY_PREFIX} OPTIONAL)
+
 endif()
 
 # Make the executable a default target to build & run in Visual Studio
