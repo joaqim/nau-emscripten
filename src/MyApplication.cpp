@@ -7,22 +7,10 @@
 #include <Magnum/Platform/EmscriptenApplication.h>
 #include <emscripten.h>
 #include <emscripten/html5.h>
-
-static const char *emscripten_result_to_string(EMSCRIPTEN_RESULT result) {
-  if (result == EMSCRIPTEN_RESULT_SUCCESS) return "EMSCRIPTEN_RESULT_SUCCESS";
-  if (result == EMSCRIPTEN_RESULT_DEFERRED) return "EMSCRIPTEN_RESULT_DEFERRED";
-  if (result == EMSCRIPTEN_RESULT_NOT_SUPPORTED) return "EMSCRIPTEN_RESULT_NOT_SUPPORTED";
-  if (result == EMSCRIPTEN_RESULT_FAILED_NOT_DEFERRED) return "EMSCRIPTEN_RESULT_FAILED_NOT_DEFERRED";
-  if (result == EMSCRIPTEN_RESULT_INVALID_TARGET) return "EMSCRIPTEN_RESULT_INVALID_TARGET";
-  if (result == EMSCRIPTEN_RESULT_UNKNOWN_TARGET) return "EMSCRIPTEN_RESULT_UNKNOWN_TARGET";
-  if (result == EMSCRIPTEN_RESULT_INVALID_PARAM) return "EMSCRIPTEN_RESULT_INVALID_PARAM";
-  if (result == EMSCRIPTEN_RESULT_FAILED) return "EMSCRIPTEN_RESULT_FAILED";
-  if (result == EMSCRIPTEN_RESULT_NO_DATA) return "EMSCRIPTEN_RESULT_NO_DATA";
-  return "Unknown EMSCRIPTEN_RESULT!";
-}
-
-#define TEST_RESULT(x) if (ret != EMSCRIPTEN_RESULT_SUCCESS) printf("%s returned %s.\n", #x, emscripten_result_to_string(ret));
 #endif
+
+#include <Magnum/Trade/MaterialData.h>
+
 
 #include "Cube.cpp"
 
@@ -81,8 +69,18 @@ MyApplication::MyApplication(const Arguments& arguments): Platform::Application{
     if(!image) Fatal{} << "Importing the image failed";
 #endif
     Debug{} << "Init!";
+#ifdef CORRADE_TARGET_EMSCRIPTEN
     Debug{} << "PointerLockActive" << isPointerLockActive();
     Debug{} << "FullscreenActive" << isFullscreenActive();
+#endif
+
+    Trade::MaterialData data{Trade::MaterialType::PbrClearCoat,
+      {{Trade::MaterialAttribute::DoubleSided, true},
+        {Trade::MaterialAttribute::BaseColor, 0x3bd267ff_srgbaf},
+        {Trade::MaterialAttribute::BaseColorTexture, 17u},
+        {Trade::MaterialAttribute::TextureMatrix, Matrix3::scaling({0.5f, 1.0f})}
+      }};
+
 }
 
 void MyApplication::drawEvent() {
@@ -113,7 +111,9 @@ void MyApplication::viewportEvent(ViewportEvent &event) {
 void MyApplication::mouseScrollEvent(MouseScrollEvent& event) {
   if(!event.offset().y()) return;
 
+#ifdef CORRADE_TARGET_EMSCRIPTEN
   if(!isFullscreenActive()){event.setAccepted();return;}
+#endif
   /* Distance to origin */
   Float distance = _pCameraObject->transformation().translation().z();
 
@@ -146,7 +146,7 @@ void MyApplication::keyPressEvent(KeyEvent &event) {
 #endif
   event.setAccepted();
 }
-
+#ifdef CORRADE_TARGET_EMSCRIPTEN
 void MyApplication::pointerLockEvent(PointerLockEvent& event) {
   Debug{} << "PointerLockChange:" << event.isActive();
   event.setAccepted();
@@ -163,6 +163,7 @@ void MyApplication::fullscreenEvent(FullscreenEvent& event) {
   }
   event.setAccepted();
 }
+#endif
 
 void MyApplication::mousePressEvent(MouseEvent& event) {
   if(event.button() == MouseEvent::Button::Left) {
@@ -179,7 +180,10 @@ void MyApplication::mouseReleaseEvent(MouseEvent& event) {
 }
 
 void MyApplication::mouseMoveEvent(MouseMoveEvent& event) {
+
+#ifdef CORRADE_TARGET_EMSCRIPTEN
   if(!isFullscreenActive()){event.setAccepted();return;}
+#endif
   //Debug{} << "MouseMoveEvent";
   //Debug{} << event.relativePosition();
   //Debug{} << event.position();
